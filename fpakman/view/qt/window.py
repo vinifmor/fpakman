@@ -10,13 +10,15 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QCheckBox, QHead
 
 from fpakman.core import resource, flatpak
 from fpakman.core.controller import FlatpakManager
+from fpakman.core.model import Application, FlatpakApplication
 from fpakman.view.qt import dialog
 from fpakman.view.qt.apps_table import AppsTable
 from fpakman.view.qt.history import HistoryDialog
 from fpakman.view.qt.info import InfoDialog
 from fpakman.view.qt.root import is_root, ask_root_password
 from fpakman.view.qt.thread import UpdateSelectedApps, RefreshApps, UninstallApp, DowngradeApp, GetAppInfo, \
-    GetAppHistory, SearchApps, InstallApp, AnimateProgress
+    GetAppHistory, SearchApps, InstallApp, AnimateProgress, VerifyModels
+from fpakman.view.qt.view_model import ApplicationView
 
 DARK_ORANGE = '#FF4500'
 
@@ -154,6 +156,9 @@ class ManageWindow(QWidget):
         self.thread_animate_progress = AnimateProgress()
         self.thread_animate_progress.signal_change.connect(self._update_progress)
 
+        self.thread_verify_models = VerifyModels()
+        self.thread_verify_models.signal_updates.connect(self._notify_model_data_change)
+
         self.toolbar_bottom = QToolBar()
         self.label_updates = QLabel('')
         self.label_updates.setStyleSheet("color: {}; font-weight: bold".format(DARK_ORANGE))
@@ -177,6 +182,9 @@ class ManageWindow(QWidget):
         self.layout.addWidget(self.toolbar_bottom)
 
         self.centralize()
+
+    def _notify_model_data_change(self):
+        self.table_apps.fill_async_data()
 
     def changeEvent(self, e: QEvent):
 
@@ -242,7 +250,7 @@ class ManageWindow(QWidget):
 
             self.thread_refresh.start()
 
-    def _finish_refresh(self, apps: List[dict]):
+    def _finish_refresh(self, apps: List[Application]):
 
         self.update_apps(apps)
         self.finish_action()
@@ -274,10 +282,10 @@ class ManageWindow(QWidget):
         if self.apps:
             show_only_apps = True if only_apps == 2 else False
 
-            for idx, app in enumerate(self.apps):
-                hidden = show_only_apps and app['model']['runtime']
+            for idx, app_v in enumerate(self.apps):
+                hidden = show_only_apps and isinstance(app_v.model, FlatpakApplication) and app_v.model.runtime
                 self.table_apps.setRowHidden(idx, hidden)
-                app['visible'] = not hidden
+                app_v.visible = not hidden
 
             self.change_update_state()
             self.table_apps.change_headers_policy(QHeaderView.Stretch)
@@ -290,9 +298,9 @@ class ManageWindow(QWidget):
 
         app_updates, runtime_updates = 0, 0
 
-        for app in self.apps:
-            if app['model']['update']:
-                if app['model']['runtime']:
+        for app_v in self.apps:
+            if app_v.model.update:
+                if app_v.model.runtime:
                     runtime_updates += 1
                 else:
                     app_updates += 1
@@ -306,13 +314,13 @@ class ManageWindow(QWidget):
         else:
             self.label_updates.setText('')
 
-        for app in self.apps:
-            if app['visible'] and app['update_checked']:
+        for app_v in self.apps:
+            if app_v.visible and app_v.update_checked:
                 enable_bt_update = True
                 break
 
         self.bt_upgrade.setEnabled(enable_bt_update)
-        self.tray_icon.notify_updates([app['model'] for app in self.apps if app['model']['update']])
+        self.tray_icon.notify_updates([app.model for app in self.apps if app.model.update])
 
     def centralize(self):
         geo = self.frameGeometry()
@@ -321,7 +329,7 @@ class ManageWindow(QWidget):
         geo.moveCenter(center_point)
         self.move(geo.topLeft())
 
-    def update_apps(self, apps: List[dict]):
+    def update_apps(self, apps: List[Application]):
         self._check_flatpak_installed()
 
         self.apps = []
@@ -330,11 +338,10 @@ class ManageWindow(QWidget):
 
         if apps:
             for app in apps:
-                app_model = {'model': app,
-                             'update_checked': app['update'],
-                             'visible': not app['runtime'] or not self.checkbox_only_apps.isChecked()}
+                app_model = ApplicationView(model=app,
+                                            visible=(isinstance(app, FlatpakApplication) and not app.runtime) or not self.checkbox_only_apps.isChecked())
 
-                napps += 1 if not app['runtime'] else 0
+                napps += 1 if isinstance(app, FlatpakApplication) and not app.runtime else 0
                 self.apps.append(app_model)
 
         if napps == 0:
@@ -349,6 +356,9 @@ class ManageWindow(QWidget):
         self.filter_only_apps(2 if self.checkbox_only_apps.isChecked() else 0)
         self.resize_and_center()
 
+        self.thread_verify_models.apps = self.apps
+        self.thread_verify_models.start()
+
     def resize_and_center(self):
         new_width = reduce(operator.add, [self.table_apps.columnWidth(i) for i in range(len(self.table_apps.column_names))]) * 1.05
         self.resize(new_width, self.height())
@@ -359,7 +369,7 @@ class ManageWindow(QWidget):
         if self._acquire_lock():
             if self.apps:
 
-                to_update = [pak['model']['ref'] for pak in self.apps if pak['visible'] and pak['update_checked']]
+                to_update = [app_v.model.ref for app_v in self.apps if app_v.visible and app_v.update_checked and isinstance(app_v.model, FlatpakApplication)]
 
                 if to_update:
                     self.textarea_output.clear()
