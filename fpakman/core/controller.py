@@ -112,3 +112,6 @@ class FlatpakManager:
             return None
 
         return flatpak.downgrade_and_stream(app.ref, commits[commit_idx + 1], root_password)
+
+    def clean_cache_for(self, app_id: str):
+        self.api_cache.delete(app_id)

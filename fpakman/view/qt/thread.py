@@ -47,17 +47,19 @@ class UninstallApp(QThread):
     signal_finished = pyqtSignal()
     signal_output = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, manager: FlatpakManager, app: ApplicationView = None):
         super(UninstallApp, self).__init__()
-        self.app_ref = None
+        self.app = app
+        self.manager = manager
 
     def run(self):
-        if self.app_ref:
-            for output in flatpak.uninstall_and_stream(self.app_ref):
+        if self.app and isinstance(self.app.model, FlatpakApplication):
+            for output in flatpak.uninstall_and_stream(self.app.model.ref):
                 line = output.decode().strip()
                 if line:
                     self.signal_output.emit(line)
 
+            self.manager.clean_cache_for(self.app.model.base_data.id)
             self.signal_finished.emit()
 
 

@@ -135,7 +135,7 @@ class ManageWindow(QWidget):
         self.thread_refresh = RefreshApps(self.manager)
         self.thread_refresh.signal.connect(self._finish_refresh)
 
-        self.thread_uninstall = UninstallApp()
+        self.thread_uninstall = UninstallApp(self.manager)
         self.thread_uninstall.signal_output.connect(self._update_action_output)
         self.thread_uninstall.signal_finished.connect(self._finish_uninstall)
 
@@ -266,14 +266,14 @@ class ManageWindow(QWidget):
         self.finish_action()
         self._release_lock()
 
-    def uninstall_app(self, app_ref: str):
+    def uninstall_app(self, app: ApplicationView):
         self._check_flatpak_installed()
 
         if self._acquire_lock():
             self._handle_console_option(True)
             self._begin_action(self.locale_keys['manage_window.status.uninstalling'])
 
-            self.thread_uninstall.app_ref = app_ref
+            self.thread_uninstall.app = app
             self.thread_uninstall.start()
 
     def _finish_uninstall(self):
@@ -409,8 +409,8 @@ class ManageWindow(QWidget):
         self.checkbox_only_apps.setEnabled(False)
         self.table_apps.setEnabled(False)
 
-    def finish_action(self, clear_search: bool = True):
-	self.ref_progress_bar.setVisible(False)
+    def finish_action(self):
+        self.ref_progress_bar.setVisible(False)
         self.ref_label_updates.setVisible(True)
         self.thread_animate_progress.stop = True
         self.progress_bar.setValue(0)
@@ -420,9 +420,6 @@ class ManageWindow(QWidget):
         self.table_apps.setEnabled(True)
         self.input_search.setEnabled(True)
         self.label_status.setText('')
-
-        if clear_search:
-            self.input_search.setText('')
 
     def downgrade_app(self, app: dict):
 
@@ -490,7 +487,7 @@ class ManageWindow(QWidget):
     def _finish_search(self, apps_found: List[Application]):
 
         self._release_lock()
-        self.finish_action(clear_search=False)
+        self.finish_action()
         self.update_apps(apps_found)
 
     def install_app(self, app: dict):

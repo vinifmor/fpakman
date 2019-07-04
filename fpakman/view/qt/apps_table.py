@@ -138,7 +138,7 @@ class AppsTable(QTableWidget):
         if dialog.ask_confirmation(title=self.window.locale_keys['manage_window.apps_table.row.actions.uninstall.popup.title'],
                                    body=self.window.locale_keys['manage_window.apps_table.row.actions.uninstall.popup.body'].format(selected_app.model.base_data.name),
                                    locale_keys=self.window.locale_keys):
-            self.window.uninstall_app(selected_app.model.ref)
+            self.window.uninstall_app(selected_app)
 
     def _downgrade_app(self):
         selected_app = self.get_selected_app()
