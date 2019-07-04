@@ -50,7 +50,7 @@ locale_keys = util.get_locale_keys(args.locale)
 app = QApplication(sys.argv)
 app.setWindowIcon(QIcon(resource.get_path('img/logo.svg')))
 
-manager = FlatpakManager(cache_expire=args.cache_exp)
+manager = FlatpakManager(cache_expiration=args.cache_exp)
 
 trayIcon = TrayIcon(locale_keys=locale_keys,
                     manager=manager,

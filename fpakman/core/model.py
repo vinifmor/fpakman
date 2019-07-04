@@ -23,7 +23,6 @@ class Application(ABC):
     def __init__(self, base_data: ApplicationData, status: ApplicationStatus = ApplicationStatus.READY, installed: bool = False, update: bool = False):
         self.base_data = base_data
         self.status = status
-        self.expires_at = None
         self.installed = installed
         self.update = update
 

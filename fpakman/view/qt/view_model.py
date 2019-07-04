@@ -1,5 +1,12 @@
+from enum import Enum
+
 from fpakman.core import util
 from fpakman.core.model import Application, ApplicationStatus, FlatpakApplication
+
+
+class ApplicationViewStatus(Enum):
+    LOADING = 0
+    READY = 1
 
 
 class ApplicationView:
@@ -8,6 +15,7 @@ class ApplicationView:
         self.model = model
         self.update_checked = model.update
         self.visible = visible
+        self.status = ApplicationViewStatus.LOADING
 
     def get_async_attr(self, attr: str, strip_html: bool = False, default: str = '...'):
 

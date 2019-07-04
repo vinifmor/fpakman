@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QTableWidget, QTableView, QMenu, QAction, QTableWidg
 from fpakman.core import resource, util
 from fpakman.core.model import FlatpakApplication, ApplicationStatus
 from fpakman.view.qt import dialog
-from fpakman.view.qt.view_model import ApplicationView
+from fpakman.view.qt.view_model import ApplicationView, ApplicationViewStatus
 
 
 class UpdateToggleButton(QToolButton):
@@ -105,10 +105,25 @@ class AppsTable(QTableWidget):
 
         if self.window.apps:
             for idx, app_v in enumerate(self.window.apps):
-                if app_v.visible and app_v.model.status == ApplicationStatus.READY:
+                if app_v.visible and app_v.status == ApplicationViewStatus.LOADING and app_v.model.status == ApplicationStatus.READY:
+                    app_v.status = ApplicationViewStatus.READY
                     self.network_man.get(QNetworkRequest(QUrl(app_v.model.base_data.icon_url)))
                     self.item(idx, 2).setText(app_v.model.base_data.latest_version)
-                    self.item(idx, 5).setText(app_v.get_async_attr('description', strip_html=True))
+                    desc = app_v.get_async_attr('description', strip_html=True)
+                    self.item(idx, 5).setText(desc)
+                    self.item(idx, 5).setToolTip(desc)
+
+            visible, ready = 0, 0
+
+            for app_v in self.window.apps:
+                if app_v.visible:
+                    visible += 1
+
+                if app_v.status == ApplicationViewStatus.READY:
+                    ready += 1
+
+            if ready == visible:
+                self.window.resize_and_center()
 
     def get_selected_app(self) -> ApplicationView:
         return self.window.apps[self.currentRow()]
@@ -143,15 +158,17 @@ class AppsTable(QTableWidget):
 
     def _load_icon(self, http_response):
         icon_url = http_response.url().toString()
-        pixmap = QPixmap()
-        pixmap.loadFromData(http_response.readAll())
-        icon = QIcon(pixmap)
-        self.icon_cache[icon_url] = icon
 
-        for idx, app in enumerate(self.window.apps):
-            if app.model.base_data.icon_url == icon_url:
-                self.item(idx, 0).setIcon(icon)
-                break
+        if not self.icon_cache.get(icon_url):
+            pixmap = QPixmap()
+            pixmap.loadFromData(http_response.readAll())
+            icon = QIcon(pixmap)
+            self.icon_cache[icon_url] = icon
+
+            for idx, app in enumerate(self.window.apps):
+                if app.model.base_data.icon_url == icon_url:
+                    self.item(idx, 0).setIcon(icon)
+                    break
 
     def update_apps(self, app_views: List[ApplicationView]):
         self.setEnabled(True)

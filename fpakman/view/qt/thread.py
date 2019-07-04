@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta
 from typing import List
 
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -7,7 +8,7 @@ from fpakman.core import flatpak
 from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import ApplicationStatus, FlatpakApplication
 from fpakman.view.qt import dialog
-from fpakman.view.qt.view_model import ApplicationView
+from fpakman.view.qt.view_model import ApplicationView, ApplicationViewStatus
 
 
 class UpdateSelectedApps(QThread):
@@ -199,19 +200,21 @@ class VerifyModels(QThread):
 
     def run(self):
 
-        last_ready = 0
+        if self.apps:
 
-        while True:
-            current_ready = 0
+            stop_at = datetime.utcnow() + timedelta(seconds=15)
+            last_ready = 0
 
-            for app in self.apps:
-                current_ready += 1 if app.model.status == ApplicationStatus.READY else 0
+            while True:
+                current_ready = 0
 
-            if current_ready > last_ready:
-                last_ready = current_ready
-                self.signal_updates.emit()
+                for app in self.apps:
+                    current_ready += 1 if app.model.status == ApplicationStatus.READY else 0
 
-            if current_ready == len(self.apps):
-                break
-            else:
-                time.sleep(0.01)
+                if current_ready > last_ready:
+                    last_ready = current_ready
+                    self.signal_updates.emit()
+
+                if current_ready == len(self.apps) or stop_at <= datetime.utcnow():
+                    self.signal_updates.emit()
+                    break

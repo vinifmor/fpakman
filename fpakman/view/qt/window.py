@@ -391,7 +391,7 @@ class ManageWindow(QWidget):
         self.thread_animate_progress.stop = False
         self.thread_animate_progress.start()
         self.ref_progress_bar.setVisible(True)
-        self.progress_bar.setValue(50)
+
         self.label_status.setText(action_label + "...")
         self.toolbar_search.setVisible(False)
         self.bt_upgrade.setEnabled(False)
@@ -400,10 +400,9 @@ class ManageWindow(QWidget):
         self.table_apps.setEnabled(False)
 
     def finish_action(self, clear_search: bool = True):
-        self.thread_animate_progress.stop = True
         self.ref_progress_bar.setVisible(False)
+        self.thread_animate_progress.stop = True
         self.progress_bar.setValue(0)
-        self.progress_bar.setVisible(False)
         self.bt_refresh.setEnabled(True)
         self.toolbar_search.setVisible(True)
         self.checkbox_only_apps.setEnabled(True)
@@ -481,7 +480,7 @@ class ManageWindow(QWidget):
             self.thread_search.word = word
             self.thread_search.start()
 
-    def _finish_search(self, apps_found: List[dict]):
+    def _finish_search(self, apps_found: List[Application]):
 
         self._release_lock()
         self.finish_action(clear_search=False)
