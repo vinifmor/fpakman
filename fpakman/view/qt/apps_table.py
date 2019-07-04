@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QTableWidget, QTableView, QMenu, QAction, QTableWidg
 
 from fpakman.core import resource, util
 from fpakman.core.model import FlatpakApplication, ApplicationStatus
+from fpakman.env.cache import Cache
 from fpakman.view.qt import dialog
 from fpakman.view.qt.view_model import ApplicationView, ApplicationViewStatus
 
@@ -37,7 +38,7 @@ class UpdateToggleButton(QToolButton):
 
 class AppsTable(QTableWidget):
 
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget, icon_cache: Cache):
         super(AppsTable, self).__init__()
         self.setParent(parent)
         self.window = parent
@@ -62,7 +63,7 @@ class AppsTable(QTableWidget):
         self.network_man = QNetworkAccessManager()
         self.network_man.finished.connect(self._load_icon)
 
-        self.icon_cache = {}
+        self.icon_cache = icon_cache
 
     def contextMenuEvent(self, QContextMenuEvent):  # selected row right click event
 
@@ -163,7 +164,7 @@ class AppsTable(QTableWidget):
             pixmap = QPixmap()
             pixmap.loadFromData(http_response.readAll())
             icon = QIcon(pixmap)
-            self.icon_cache[icon_url] = icon
+            self.icon_cache.add(icon_url, icon)
 
             for idx, app in enumerate(self.window.apps):
                 if app.model.base_data.icon_url == icon_url:

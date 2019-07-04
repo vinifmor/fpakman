@@ -5,33 +5,18 @@ from typing import List
 import requests
 
 from fpakman.core import flatpak
-from fpakman.core.constants import FLATHUB_API_URL
 from fpakman.core.model import FlatpakApplication, ApplicationData, ApplicationStatus
 from fpakman.core.worker import FlatpakAsyncDataLoaderManager
+from fpakman.env.cache import Cache
 
 
 class FlatpakManager:
 
-    def __init__(self, cache_expiration: int = 60 * 60):
-        self.api_cache = {}
-        self.cache_expiration = cache_expiration
+    def __init__(self, api_cache: Cache):
+        self.api_cache = api_cache
         self.http_session = requests.Session()
-        self.lock_db_read = Lock()
         self.lock_read = Lock()
-        self.async_data_loader = FlatpakAsyncDataLoaderManager(api_cache=self.api_cache, cache_expiration=self.cache_expiration)
-
-    def load_full_database(self):
-
-        self.lock_db_read.acquire()
-
-        try:
-            res = self.http_session.get(FLATHUB_API_URL + '/apps', timeout=30)
-
-            if res.status_code == 200:
-                for app in res.json():
-                    self.api_cache[app['flatpakAppId']] = app
-        finally:
-            self.lock_db_read.release()
+        self.async_data_loader = FlatpakAsyncDataLoaderManager(api_cache=self.api_cache)
 
     def _map_to_model(self, app: dict) -> FlatpakApplication:
 
@@ -45,6 +30,7 @@ class FlatpakManager:
                                                              name=app.get('name'),
                                                              version=app.get('version'),
                                                              latest_version=app.get('latest_version')))
+
         api_data = self.api_cache.get(app['id'])
 
         expired_data = api_data and api_data.get('expires_at') and api_data['expires_at'] <= datetime.utcnow()

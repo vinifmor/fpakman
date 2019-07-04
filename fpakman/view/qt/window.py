@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QCheckBox, QHead
 from fpakman.core import resource, flatpak
 from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import Application, FlatpakApplication
+from fpakman.env.cache import Cache
 from fpakman.view.qt import dialog
 from fpakman.view.qt.apps_table import AppsTable
 from fpakman.view.qt.history import HistoryDialog
@@ -27,7 +28,7 @@ class ManageWindow(QWidget):
 
     __BASE_HEIGHT__ = 400
 
-    def __init__(self, locale_keys: dict, manager: FlatpakManager, tray_icon=None):
+    def __init__(self, locale_keys: dict, icon_cache: Cache, manager: FlatpakManager, tray_icon=None):
         super(ManageWindow, self).__init__()
         self.locale_keys = locale_keys
         self.manager = manager
@@ -36,6 +37,7 @@ class ManageWindow(QWidget):
         self.working = False  # restrict the number of threaded actions
         self.apps = []
         self.label_flatpak = None
+        self.icon_cache = icon_cache
 
         self.icon_flathub = QIcon(resource.get_path('img/logo.svg'))
         self._check_flatpak_installed()
@@ -113,7 +115,7 @@ class ManageWindow(QWidget):
 
         self.layout.addWidget(toolbar)
 
-        self.table_apps = AppsTable(self)
+        self.table_apps = AppsTable(self, self.icon_cache)
         self.table_apps.change_headers_policy()
 
         self.layout.addWidget(self.table_apps)
