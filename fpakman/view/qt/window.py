@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QCheckBox, QHead
 from fpakman.core import resource, flatpak
 from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import Application, FlatpakApplication
-from fpakman.env.cache import Cache
+from fpakman.util.cache import Cache
 from fpakman.view.qt import dialog
 from fpakman.view.qt.apps_table import AppsTable
 from fpakman.view.qt.history import HistoryDialog

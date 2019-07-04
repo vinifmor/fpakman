@@ -7,7 +7,7 @@ import requests
 from fpakman.core import flatpak
 from fpakman.core.model import FlatpakApplication, ApplicationData, ApplicationStatus
 from fpakman.core.worker import FlatpakAsyncDataLoaderManager
-from fpakman.env.cache import Cache
+from fpakman.util.cache import Cache
 
 
 class FlatpakManager:
