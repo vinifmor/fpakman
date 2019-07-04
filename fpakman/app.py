@@ -8,10 +8,10 @@ from colorama import Fore
 
 from fpakman import __version__
 from fpakman.core import resource
-from fpakman.core import util
+from fpakman.util import util
 from fpakman.core.controller import FlatpakManager
-from fpakman.env.cache import Cache
-from fpakman.env.memory import CacheCleaner
+from fpakman.util.cache import Cache
+from fpakman.util.memory import CacheCleaner
 from fpakman.view.qt import common
 from fpakman.view.qt.systray import TrayIcon
 

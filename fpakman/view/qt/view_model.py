@@ -1,6 +1,6 @@
 from enum import Enum
 
-from fpakman.core import util
+from fpakman.util import util
 from fpakman.core.model import Application, ApplicationStatus, FlatpakApplication
 
 

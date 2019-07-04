@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QSystemTrayIcon, QMenu
 from fpakman.core import resource, system
 from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import Application
-from fpakman.env.cache import Cache
+from fpakman.util.cache import Cache
 from fpakman.view.qt.about import AboutDialog
 from fpakman.view.qt.window import ManageWindow
 

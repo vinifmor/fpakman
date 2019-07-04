@@ -8,7 +8,7 @@ from colorama import Fore
 
 from fpakman.core.constants import FLATHUB_API_URL, FLATHUB_URL
 from fpakman.core.model import FlatpakApplication, ApplicationStatus
-from fpakman.env.cache import Cache
+from fpakman.util.cache import Cache
 
 
 class FlatpakAsyncDataLoader(Thread):
