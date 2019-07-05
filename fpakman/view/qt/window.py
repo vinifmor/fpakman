@@ -6,14 +6,14 @@ from typing import List
 from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import QIcon, QWindowStateChangeEvent, QPixmap
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QCheckBox, QHeaderView, QToolButton, QToolBar, \
-    QSizePolicy, QLabel, QPlainTextEdit, QLineEdit, QProgressBar
+    QSizePolicy, QLabel, QPlainTextEdit, QLineEdit, QProgressBar, QScrollArea
 
 from fpakman.core import resource, flatpak
 from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import Application, FlatpakApplication
 from fpakman.util.cache import Cache
 from fpakman.view.qt import dialog, common
-from fpakman.view.qt.apps_table import AppsTable, AppsTable2
+from fpakman.view.qt.apps_table import AppsTable, AppsTable2, AppsTable3
 from fpakman.view.qt.history import HistoryDialog
 from fpakman.view.qt.info import InfoDialog
 from fpakman.view.qt.root import is_root, ask_root_password
@@ -106,10 +106,14 @@ class ManageWindow(QWidget):
         self.layout.addWidget(toolbar)
 
         self.table_apps = AppsTable2(self)
+
         # self.table_apps = AppsTable(self, self.icon_cache)
         # self.table_apps.change_headers_policy()
+        # self.layout.addWidget(self.table_apps)
 
-        self.layout.addWidget(self.table_apps)
+        # self.table_apps = AppsTable3(self)
+        # self.table_apps.change_headers_policy()
+        # self.layout.addWidget(self.table_apps)
 
         toolbar_console = QToolBar()
 
@@ -196,6 +200,7 @@ class ManageWindow(QWidget):
         if isinstance(e, QWindowStateChangeEvent):
             policy = QHeaderView.Stretch if self.isMaximized() else QHeaderView.ResizeToContents
             self.table_apps.change_headers_policy(policy)
+            self.table_apps.reorganize()
 
     def closeEvent(self, event):
 
@@ -367,8 +372,9 @@ class ManageWindow(QWidget):
         self.thread_verify_models.start()
 
     def resize_and_center(self):
-        new_width = reduce(operator.add, [self.table_apps.columnWidth(i) for i in range(len(self.table_apps.column_names))]) * 1.05
-        self.resize(new_width, self.height())
+        # new_width = reduce(operator.add, [self.table_apps.columnWidth(i) for i in range(len(self.table_apps.column_names))]) * 1.05
+        # self.resize(new_width, self.height())
+        self.resize(500, self.height())
         self.centralize()
 
     def update_selected(self):

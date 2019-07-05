@@ -4,7 +4,8 @@ from PyQt5.QtCore import Qt, QUrl, QItemSelectionModel
 from PyQt5.QtGui import QPixmap, QIcon, QColor, QCursor
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from PyQt5.QtWidgets import QTableWidget, QTableView, QMenu, QAction, QTableWidgetItem, QToolButton, QWidget, \
-    QHeaderView, QLabel, QGridLayout, QFormLayout, QHBoxLayout, QVBoxLayout, QFrame
+    QHeaderView, QLabel, QGridLayout, QFormLayout, QHBoxLayout, QVBoxLayout, QFrame, QScrollArea, QGraphicsEffect, \
+    QGraphicsDropShadowEffect
 
 from fpakman.core import resource
 from fpakman.core.model import FlatpakApplication, ApplicationStatus
@@ -247,19 +248,35 @@ class AppsTable(QTableWidget):
 class AppsTable2(QWidget):
 
     def __init__(self, parent: QWidget):
-        super(AppsTable2, self).__init__(parent=parent)
+        super(AppsTable2, self).__init__()
+        self.setParent(parent)
+
+        self.scroll = QScrollArea(parent)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        parent.layout.addWidget(self.scroll, Qt.AlignHCenter)
+
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.column_names = list(range(0, 8))
 
-    def update_apps(self, app_views: List[ApplicationView]):
+        self.scroll.setWidget(self)
+        self._apps = []
 
-        row, col, col_l = 0, 0, 3
+    def update_apps(self, app_views: List[ApplicationView], max_columns: int = 2):
+
+        self.clear()
+
+        row, col = 0, 0
+        limit_width = len(app_views) >= max_columns
+
         for app_v in app_views:
-            self.grid.addWidget(ApplicationBox(self, app_v), row, col)
+            app_box = ApplicationBox(self, app_v, limit_width)
+            self._apps.append(app_box)
+            self.grid.addWidget(app_box, row, col)
             col += 1
 
-            if col + 1 > col_l:
+            if col + 1 > max_columns:
                 col = 0
                 row += 1
 
@@ -275,23 +292,37 @@ class AppsTable2(QWidget):
     def fill_async_data(self):
         pass
 
+    def clear(self):
+
+        if self._apps:
+            for app_box in self._apps:
+                app_box.setParent(None)
+                self.grid.removeWidget(app_box)
+
+    def reorganize(self):
+        if self._apps:
+            columns = int(self.parent().width() / ApplicationBox.WIDTH)
+            self.update_apps([app.app_view for app in self._apps], max_columns=columns)
+
 
 class ApplicationBox(QFrame):
 
-    def __init__(self, parent: QWidget, app_v: ApplicationView):
-        super(ApplicationBox, self).__init__(parent=parent)
-        self.setStyleSheet("ApplicationBox { border: 1px solid grey; border-radius: 10px; }")
-        self.setFixedWidth(250)
-        self.setFixedHeight(100)
+    HEIGHT = 100
+    WIDTH = 250
 
-        # layout = QHBoxLayout()
-        # self.setLayout(layout)
-        #
-        # label_icon = QLabel()
-        # label_icon.setPixmap(QPixmap(resource.get_path('img/logo.svg')))
-        # layout.addWidget(label_icon)
-        #
-        # layout.addWidget(ApplicationBoxData(self, app_v))
+    def __init__(self, parent: QWidget, app_v: ApplicationView, limit_width: bool = True):
+        super(ApplicationBox, self).__init__(parent=parent)
+        self.app_view = app_v
+        self.setStyleSheet("ApplicationBox { border: 1px solid #F8F9F9; border-radius: 10px; background: #FDFEFE; }")
+        self.setMaximumHeight(self.HEIGHT)
+
+        if limit_width:
+            self.setMaximumWidth(self.WIDTH)
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setXOffset(1)
+        shadow.setYOffset(2)
+        self.setGraphicsEffect(shadow)
 
         layout = QGridLayout()
         self.setLayout(layout)
@@ -312,3 +343,36 @@ class ApplicationBox(QFrame):
         label_version.setStyleSheet('font-size: 8px; font-weight: bold')
         layout.addWidget(label_version, 2, 2)
 
+
+class AppsTable3(QTableWidget):
+
+    def __init__(self, parent: QWidget):
+        super(AppsTable3, self).__init__()
+        self.setParent(parent)
+        self.setShowGrid(False)
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setVisible(False)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setColumnCount(1)
+
+    def update_apps(self, app_views: List[ApplicationView]):
+
+        self.setEnabled(True)
+        self.setRowCount(len(app_views) if app_views else 0)
+
+        if app_views:
+            for idx, app_v in enumerate(app_views):
+                self.setCellWidget(idx, 0, ApplicationBox(self, app_v))
+
+    def change_headers_policy(self, policy: QHeaderView = QHeaderView.ResizeToContents):
+        header_horizontal = self.horizontalHeader()
+        for i in range(self.columnCount()):
+            header_horizontal.setSectionResizeMode(i, QHeaderView.Stretch)
+
+        header_vertical = self.verticalHeader()
+
+        for i in range(self.rowCount()):
+            header_vertical.setSectionResizeMode(i, QHeaderView.Stretch)
+
+    def fill_async_data(self):
+        pass
