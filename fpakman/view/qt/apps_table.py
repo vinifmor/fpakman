@@ -1,10 +1,10 @@
 from typing import List
 
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtCore import Qt, QUrl, QItemSelectionModel
 from PyQt5.QtGui import QPixmap, QIcon, QColor, QCursor
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from PyQt5.QtWidgets import QTableWidget, QTableView, QMenu, QAction, QTableWidgetItem, QToolButton, QWidget, \
-    QHeaderView, QLabel
+    QHeaderView, QLabel, QGridLayout, QFormLayout, QHBoxLayout, QVBoxLayout, QFrame
 
 from fpakman.core import resource
 from fpakman.core.model import FlatpakApplication, ApplicationStatus
@@ -242,3 +242,73 @@ class AppsTable(QTableWidget):
         header_horizontal = self.horizontalHeader()
         for i in range(self.columnCount()):
                 header_horizontal.setSectionResizeMode(i, policy)
+
+
+class AppsTable2(QWidget):
+
+    def __init__(self, parent: QWidget):
+        super(AppsTable2, self).__init__(parent=parent)
+        self.grid = QGridLayout()
+        self.setLayout(self.grid)
+        self.column_names = list(range(0, 8))
+
+    def update_apps(self, app_views: List[ApplicationView]):
+
+        row, col, col_l = 0, 0, 3
+        for app_v in app_views:
+            self.grid.addWidget(ApplicationBox(self, app_v), row, col)
+            col += 1
+
+            if col + 1 > col_l:
+                col = 0
+                row += 1
+
+    def setRowHidden(self, idx, hidden):
+        pass
+
+    def change_headers_policy(self, policy = None):
+        pass
+
+    def columnWidth(self, idx):
+        return 10
+
+    def fill_async_data(self):
+        pass
+
+
+class ApplicationBox(QFrame):
+
+    def __init__(self, parent: QWidget, app_v: ApplicationView):
+        super(ApplicationBox, self).__init__(parent=parent)
+        self.setStyleSheet("ApplicationBox { border: 1px solid grey; border-radius: 10px; }")
+        self.setFixedWidth(250)
+        self.setFixedHeight(100)
+
+        # layout = QHBoxLayout()
+        # self.setLayout(layout)
+        #
+        # label_icon = QLabel()
+        # label_icon.setPixmap(QPixmap(resource.get_path('img/logo.svg')))
+        # layout.addWidget(label_icon)
+        #
+        # layout.addWidget(ApplicationBoxData(self, app_v))
+
+        layout = QGridLayout()
+        self.setLayout(layout)
+
+        label_icon = QLabel()
+        label_icon.setPixmap(QPixmap(resource.get_path('img/logo.svg')))
+        layout.addWidget(label_icon, 1, 0)
+
+        label_name = QLabel(app_v.model.base_data.name)
+        label_name.setStyleSheet('font-size: 10px; font-weight: bold')
+        layout.addWidget(label_name, 0, 1)
+
+        label_id = QLabel(app_v.model.base_data.id)
+        label_id.setStyleSheet('font-size: 8px;')
+        layout.addWidget(label_id, 1, 1)
+
+        label_version = QLabel(app_v.model.base_data.version)
+        label_version.setStyleSheet('font-size: 8px; font-weight: bold')
+        layout.addWidget(label_version, 2, 2)
+

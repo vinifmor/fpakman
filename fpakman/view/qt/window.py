@@ -13,7 +13,7 @@ from fpakman.core.controller import FlatpakManager
 from fpakman.core.model import Application, FlatpakApplication
 from fpakman.util.cache import Cache
 from fpakman.view.qt import dialog, common
-from fpakman.view.qt.apps_table import AppsTable
+from fpakman.view.qt.apps_table import AppsTable, AppsTable2
 from fpakman.view.qt.history import HistoryDialog
 from fpakman.view.qt.info import InfoDialog
 from fpakman.view.qt.root import is_root, ask_root_password
@@ -105,8 +105,9 @@ class ManageWindow(QWidget):
 
         self.layout.addWidget(toolbar)
 
-        self.table_apps = AppsTable(self, self.icon_cache)
-        self.table_apps.change_headers_policy()
+        self.table_apps = AppsTable2(self)
+        # self.table_apps = AppsTable(self, self.icon_cache)
+        # self.table_apps.change_headers_policy()
 
         self.layout.addWidget(self.table_apps)
 
