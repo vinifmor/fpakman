@@ -356,6 +356,8 @@ class AppsTable(QTableWidget):
 
         if desc and desc != '...':
             desc = util.strip_html(desc[0:25]) + '...'
+        else:
+            desc = '( {} )'.format(self.window.locale_keys['no_description'])
 
         col.setText(desc)
 

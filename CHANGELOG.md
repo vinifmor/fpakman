@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.5.1]
 ### Improvements:
 - suggestions are now retrieved asynchronously. Response time takes 45% less.
+- showing "( no description )" instead of a blank column for apps with no description set
 ### Fixes:
 - [flatpak dependency](https://github.com/vinifmor/fpakman/issues/36)
 
