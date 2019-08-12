@@ -1,5 +1,8 @@
 ## fpakman
 
+**fpakman** project was renamed as **bauh** and will be maintained at (https://github.com/vinifmor/bauh).
+
+
 Non-official graphical user interface for Flatpak / Snap application management. It is a tray icon that let the user known when new updates are available and
 an application management panel where you can search, update, install and uninstall applications.
 
